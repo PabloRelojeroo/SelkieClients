@@ -256,11 +256,18 @@ class Home {
         });
 
         launch.on('progress', (progress, size) => {
-            infoStarting.innerHTML = `Descargando ${((progress / size) * 100).toFixed(0)}%`
-            ipcRenderer.send('main-window-progress', { progress, size })
-            progressBar.value = progress;
-            progressBar.max = size;
+            if (!isNaN(progress) && isFinite(progress) && !isNaN(size) && isFinite(size) && size > 0) {
+                let percent = ((progress / size) * 100).toFixed(0);
+                infoStarting.innerHTML = `Descargando ${percent}%`;
+                ipcRenderer.send('main-window-progress', { progress, size });
+                progressBar.value = progress;
+                progressBar.max = size;
+            } else {
+                console.warn("Valores de progreso inválidos:", { progress, size });
+                infoStarting.innerHTML = `Descargando...`;
+            }
         });
+        
 
         launch.on('check', (progress, size) => {
             infoStarting.innerHTML = `Vérification ${((progress / size) * 100).toFixed(0)}%`
