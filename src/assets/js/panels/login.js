@@ -28,83 +28,110 @@ class Login {
     }
 
     async getMicrosoft() {
-        console.log('Initializing Microsoft login...');
+        console.log('Iniciando cuenta de Microsoft.');
         let popupLogin = new popup();
         let loginHome = document.querySelector('.login-home');
         let microsoftBtn = document.querySelector('.connect-home');
+        let crackBtn = document.querySelector('.connect-crack');
+        let cancelBtnHome = document.querySelector('.cancel-home');
+    
+        // Mostrar la pantalla principal
         loginHome.style.display = 'block';
-
+        cancelBtnHome.style.display = 'none'; // Asegúrate de que esté oculto inicialmente
+    
+        // Evento para la cuenta Offline
+        crackBtn.addEventListener("click", () => {
+            this.getCrack(); // Llamar a la función getCrack
+        });
+    
+        // Evento para la cuenta de Microsoft
         microsoftBtn.addEventListener("click", () => {
             popupLogin.openPopup({
-                title: 'Connexion',
-                content: 'Veuillez patienter...',
+                title: 'Conectando',
+                content: 'Espere por favor ⏳',
                 color: 'var(--color)'
             });
-
+    
             ipcRenderer.invoke('Microsoft-window', this.config.client_id).then(async account_connect => {
-                if (account_connect == 'cancel' || !account_connect) {
+                if (account_connect === 'cancel' || !account_connect) {
                     popupLogin.closePopup();
                     return;
                 } else {
-                    await this.saveData(account_connect)
+                    await this.saveData(account_connect);
                     popupLogin.closePopup();
                 }
-
             }).catch(err => {
                 popupLogin.openPopup({
-                    title: 'Erreur',
+                    title: 'Error',
                     content: err,
                     options: true
                 });
             });
-        })
+        });
     }
-
+    
     async getCrack() {
-        console.log('Initializing offline login...');
+        console.log('Iniciando cuenta Offline.');
         let popupLogin = new popup();
+        let loginHome = document.querySelector('.login-home');
         let loginOffline = document.querySelector('.login-offline');
-
         let emailOffline = document.querySelector('.email-offline');
         let connectOffline = document.querySelector('.connect-offline');
-        loginOffline.style.display = 'block';
-
+        let cancelBtnOffline = document.querySelector('.cancel-offline');
+    
+        // Mostrar vista de cuenta Offline
+        loginHome.style.display = 'none'; // Ocultar la pantalla principal
+        loginOffline.style.display = 'block'; // Mostrar la vista de Offline
+        cancelBtnOffline.style.display = 'block'; // Asegurarse de que el botón de cancelar esté visible
+    
+        // Evento de Cancelar para regresar a loginHome desde Offline
+        cancelBtnOffline.addEventListener("click", () => {
+            loginOffline.style.display = 'none'; // Ocultar la vista de Offline
+            loginHome.style.display = 'block'; // Mostrar la pantalla principal
+            cancelBtnOffline.style.display = 'none'; // Ocultar el botón de cancelar
+        });
+    
+        // Evento de Conectar en modo Offline
         connectOffline.addEventListener('click', async () => {
             if (emailOffline.value.length < 3) {
                 popupLogin.openPopup({
-                    title: 'Erreur',
-                    content: 'Votre pseudo doit faire au moins 3 caractères.',
+                    title: 'Error',
+                    content: 'Tu apodo debe tener al menos 3 caracteres.',
                     options: true
                 });
                 return;
             }
-
+    
             if (emailOffline.value.match(/ /g)) {
                 popupLogin.openPopup({
-                    title: 'Erreur',
-                    content: 'Votre pseudo ne doit pas contenir d\'espaces.',
+                    title: 'Error',
+                    content: 'Tu apodo no debe contener espacios.',
                     options: true
                 });
                 return;
             }
-
+    
             let MojangConnect = await Mojang.login(emailOffline.value);
-
+    
             if (MojangConnect.error) {
                 popupLogin.openPopup({
-                    title: 'Erreur',
+                    title: 'Error',
                     content: MojangConnect.message,
                     options: true
                 });
                 return;
             }
-            await this.saveData(MojangConnect)
+    
+            await this.saveData(MojangConnect);
             popupLogin.closePopup();
+            loginOffline.style.display = 'none'; // Oculta la vista de Offline después de iniciar sesión
+            loginHome.style.display = 'block'; // Muestra la pantalla principal
+            cancelBtnOffline.style.display = 'none'; // Oculta el botón de cancelar
         });
-    }
-
+    }  
+    
     async getAZauth() {
-        console.log('Initializing AZauth login...');
+        console.log('Iniciando cuenta de AZauth.');
         let AZauthClient = new AZauth(this.config.online);
         let PopupLogin = new popup();
         let loginAZauth = document.querySelector('.login-AZauth');
@@ -121,15 +148,15 @@ class Login {
 
         AZauthConnectBTN.addEventListener('click', async () => {
             PopupLogin.openPopup({
-                title: 'Connexion en cours...',
-                content: 'Veuillez patienter...',
+                title: 'Conexión en curso.',
+                content: 'Espere por favor.',
                 color: 'var(--color)'
             });
 
             if (AZauthEmail.value == '' || AZauthPassword.value == '') {
                 PopupLogin.openPopup({
-                    title: 'Erreur',
-                    content: 'Veuillez remplir tous les champs.',
+                    title: 'Error',
+                    content: 'Por favor complete todos los campos.',
                     options: true
                 });
                 return;
@@ -139,7 +166,7 @@ class Login {
 
             if (AZauthConnect.error) {
                 PopupLogin.openPopup({
-                    title: 'Erreur',
+                    title: 'Error',
                     content: AZauthConnect.message,
                     options: true
                 });
@@ -156,15 +183,15 @@ class Login {
 
                 connectAZauthA2F.addEventListener('click', async () => {
                     PopupLogin.openPopup({
-                        title: 'Connexion en cours...',
-                        content: 'Veuillez patienter...',
+                        title: 'Conexión en curso.',
+                        content: 'Espere por favor.',
                         color: 'var(--color)'
                     });
 
                     if (AZauthA2F.value == '') {
                         PopupLogin.openPopup({
-                            title: 'Erreur',
-                            content: 'Veuillez entrer le code A2F.',
+                            title: 'Error',
+                            content: 'Por favor ingrese el código A2F.',
                             options: true
                         });
                         return;
@@ -174,7 +201,7 @@ class Login {
 
                     if (AZauthConnect.error) {
                         PopupLogin.openPopup({
-                            title: 'Erreur',
+                            title: 'Error',
                             content: AZauthConnect.message,
                             options: true
                         });

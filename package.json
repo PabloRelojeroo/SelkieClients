@@ -1,15 +1,15 @@
 {
-    "name": "Selvania-Launcher",
-    "preductname": "Selvania Launcher",
-    "version": "2.0.7",
-    "description": "Launcher Mincraft pour le serveur Selvania",
+    "name": "selkieclient",
+    "preductname": "Selike Client",
+    "version": "1.0.0",
+    "description": "Launcher para la comunidad de Selkie",
     "main": "src/app.js",
     "author": {
-        "name": "luuxis, Inc.",
-        "email": "contact@luuxis.fr",
-        "url": "https://github.com/luuxis"
+        "name": "PabloRelojero",
+        "email": "pablorelojerodev@gmail.com",
+        "url": "https://github.com/pablorelojerodeveloper"
     },
-    "url": "http://launcher.luuxis.fr",
+    "url": "http://147.185.221.25:34872",
     "scripts": {
         "start": "cross-env-shell NODE_ENV=dev electron .",
         "dev": "cross-env-shell DEV_TOOL=open nodemon --exec npm start",
@@ -22,8 +22,8 @@
         "ignore": "**/test"
     },
     "dependencies": {
-        "electron-updater": "^6.1.8",
-        "minecraft-java-core": "^3.10.4",
+        "electron-updater": "^6.3.9",
+        "minecraft-java-core": "^3.11.4",
         "node-bdd": "^2.0.4",
         "node-fetch": "^2.7.0",
         "xml-js": "^1.6.11"
@@ -39,6 +39,6 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/luuxis/Selvania-Launcher.git"
+        "url": "git+https://github.com/PabloRelojeroDeveloper/SelkieClients.git"
     }
 }
