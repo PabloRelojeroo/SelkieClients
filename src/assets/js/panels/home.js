@@ -6,12 +6,15 @@ import { config, database, logger, changePanel, appdata, setStatus, pkg, popup }
 
 const { Launch } = require('minecraft-java-core')
 const { shell, ipcRenderer } = require('electron')
+import DiscordRPC from './discord-rpc.js';
 
 class Home {
     static id = "home";
     async init(config) {
         this.config = config;
         this.db = new database();
+        this.rpc = new DiscordRPC();
+        await this.rpc.init();
         this.news()
         this.socialLick()
         this.instancesSelect()
@@ -266,6 +269,7 @@ class Home {
                 console.warn("Valores de progreso inválidos:", { progress, size });
                 infoStarting.innerHTML = `Descargando...`;
             }
+            this.rpc.updateDownloadProgress(progress, size);
         });
         
 
@@ -302,6 +306,7 @@ class Home {
             ipcRenderer.send('main-window-progress-load')
             infoStarting.innerHTML = `Iniciando...`
             console.log(e);
+            this.rpc.updateForInstance(options.name);
         })
 
         launch.on('close', code => {
@@ -314,6 +319,7 @@ class Home {
             infoStarting.innerHTML = `Vérification`
             new logger(pkg.name, '#7289da');
             console.log('Close');
+            this.rpc.setDefault();
         });
 
         launch.on('error', err => {
@@ -343,7 +349,7 @@ class Home {
         let year = date.getFullYear()
         let month = date.getMonth() + 1
         let day = date.getDate()
-        let allMonth = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
+        let allMonth = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'sepriembre', 'actubre', 'noviebre', 'diciembre']
         return { year: year, month: allMonth[month - 1], day: day }
     }
 }

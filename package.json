@@ -1,7 +1,7 @@
 {
     "name": "selkieclient",
     "preductname": "Selike Client",
-    "version": "1.0.1",
+    "version": "1.0.3",
     "description": "Launcher para la comunidad de Selkie",
     "main": "src/app.js",
     "author": {
@@ -9,7 +9,7 @@
         "email": "pablorelojerodev@gmail.com",
         "url": "https://github.com/pablorelojerodeveloper"
     },
-    "url": "http://147.185.221.25:34872",
+    "url": "https://pablo.pablorelojerio.online",
     "scripts": {
         "start": "cross-env-shell NODE_ENV=dev electron .",
         "dev": "cross-env-shell DEV_TOOL=open nodemon --exec npm start",
@@ -22,6 +22,7 @@
         "ignore": "**/test"
     },
     "dependencies": {
+        "discord-rpc": "^4.0.1",
         "electron-updater": "^6.3.9",
         "minecraft-java-core": "^3.11.4",
         "node-bdd": "^2.0.4",
