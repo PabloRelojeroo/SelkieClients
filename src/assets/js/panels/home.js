@@ -7,6 +7,7 @@ import { config, database, logger, changePanel, appdata, setStatus, pkg, popup }
 const { Launch } = require('minecraft-java-core')
 const { shell, ipcRenderer } = require('electron')
 import DiscordRPC from './discord-rpc.js';
+import InstanceAssetsHandler from './InstanceAssetsHandler.js';
 
 class Home {
     static id = "home";
@@ -16,9 +17,72 @@ class Home {
         this.rpc = new DiscordRPC();
         await this.rpc.init();
         this.news()
+        this.assetsHandler = new InstanceAssetsHandler();
+        await this.loadInstanceAssets(); // Cargar assets iniciales
         this.socialLick()
         this.instancesSelect()
         document.querySelector('.settings-btn').addEventListener('click', e => changePanel('settings'))
+    }
+
+    async loadInstanceAssets() {
+        const configClient = await this.db.readData('configClient');
+        const instancesList = await config.getInstanceList();
+        
+        const sidebarLogoContainer = document.createElement('div');
+        sidebarLogoContainer.classList.add('sidebar-logos');
+        document.querySelector('.sidebar').insertBefore(
+            sidebarLogoContainer, 
+            document.querySelector('.player-options')
+        );
+    
+        for (let instance of instancesList) {
+            const logoElement = await this.assetsHandler.createLogoElement(
+                instance,
+                async (selectedInstance) => {
+                    const configClient = await this.db.readData('configClient');
+                    configClient.instance_selct = selectedInstance.name;
+                    await this.db.updateData('configClient', configClient);
+    
+                    // Actualizar fondo directamente aquí también
+                    await this.assetsHandler.updateInstanceBackground(selectedInstance);
+                    
+                    const statusName = selectedInstance.customization?.name_display || 
+                        selectedInstance.status?.nameServer ||
+                        selectedInstance.name;
+                    await setStatus(selectedInstance.status, statusName);
+                }
+            );
+    
+            if (instance.name === configClient?.instance_selct) {
+                logoElement.classList.add('active-instance');
+                await this.assetsHandler.updateInstanceBackground(instance);
+            }
+    
+            sidebarLogoContainer.appendChild(logoElement);
+        }
+    }
+    
+    async setInstanceBackground(instance) {
+        // Construir URL del fondo
+        const backgroundUrl = instance.background ? 
+            `${instance.url}/assets/instances/${instance.name}/background.png` : 
+            'assets/images/background.png';
+    
+        // Precargar imagen para transición suave
+        const img = new Image();
+        
+        img.onload = () => {
+            document.body.style.backgroundImage = `url('${backgroundUrl}')`;
+            document.body.style.backgroundSize = 'cover';
+            document.body.style.backgroundPosition = 'center';
+            document.body.style.backgroundRepeat = 'no-repeat';
+        };
+    
+        img.onerror = () => {
+            document.body.style.backgroundImage = 'url("assets/images/background.png")';
+        };
+    
+        img.src = backgroundUrl;
     }
 
     async news() {
