@@ -168,100 +168,156 @@ class Home {
     }
 
     async instancesSelect() {
-        let configClient = await this.db.readData('configClient')
-        let auth = await this.db.readData('accounts', configClient.account_selected)
-        let instancesList = await config.getInstanceList()
-        let instanceSelect = instancesList.find(i => i.name == configClient?.instance_selct) ? configClient?.instance_selct : null
-
-        let instanceBTN = document.querySelector('.play-instance')
-        let instancePopup = document.querySelector('.instance-popup')
-        let instancesListPopup = document.querySelector('.instances-List')
-        let instanceCloseBTN = document.querySelector('.close-popup')
-
-        if (instancesList.length === 1) {
-            document.querySelector('.instance-select').style.display = 'none'
-            instanceBTN.style.paddingRight = '0'
-        }
-
-        if (!instanceSelect) {
-            let newInstanceSelect = instancesList.find(i => i.whitelistActive == false)
-            let configClient = await this.db.readData('configClient')
-            configClient.instance_selct = newInstanceSelect.name
-            instanceSelect = newInstanceSelect.name
-            await this.db.updateData('configClient', configClient)
-        }
-
-        for (let instance of instancesList) {
-            if (instance.whitelistActive) {
-                let whitelist = instance.whitelist.find(whitelist => whitelist == auth?.name)
-                if (whitelist !== auth?.name) {
-                    if (instance.name == instanceSelect) {
-                        let newInstanceSelect = instancesList.find(i => i.whitelistActive == false)
-                        let configClient = await this.db.readData('configClient')
-                        configClient.instance_selct = newInstanceSelect.name
-                        instanceSelect = newInstanceSelect.name
-                        setStatus(newInstanceSelect.status)
-                        await this.db.updateData('configClient', configClient)
-                    }
-                }
-            } else console.log(`Iniciando instancia ${instance.name}...`)
-            if (instance.name == instanceSelect) setStatus(instance.status)
-        }
-
-        instancePopup.addEventListener('click', async e => {
-            let configClient = await this.db.readData('configClient')
-
-            if (e.target.classList.contains('instance-elements')) {
-                let newInstanceSelect = e.target.id
-                let activeInstanceSelect = document.querySelector('.active-instance')
-
-                if (activeInstanceSelect) activeInstanceSelect.classList.toggle('active-instance');
-                e.target.classList.add('active-instance');
-
-                configClient.instance_selct = newInstanceSelect
-                await this.db.updateData('configClient', configClient)
-                instanceSelect = instancesList.filter(i => i.name == newInstanceSelect)
-                instancePopup.style.display = 'none'
-                let instance = await config.getInstanceList()
-                let options = instance.find(i => i.name == configClient.instance_selct)
-                await setStatus(options.status)
+        try {
+            const configClient = await this.db.readData('configClient');
+            const auth = await this.db.readData('accounts', configClient.account_selected);
+            const instancesList = await config.getInstanceList();
+            let instanceSelect = instancesList.find(i => i.name == configClient?.instance_selct)?.name || null;
+    
+            // Cache DOM elements
+            const elements = {
+                instanceBTN: document.querySelector('.play-instance'),
+                instancePopup: document.querySelector('.instance-popup'),
+                instancesListPopup: document.querySelector('.instances-List'),
+                instanceCloseBTN: document.querySelector('.close-popup'),
+                instanceSelectBtn: document.querySelector('.instance-select')
+            };
+    
+            // Manejar interfaz para instancia única
+            if (instancesList.length === 1) {
+                elements.instanceSelectBtn.style.display = 'none';
+                elements.instanceBTN.style.paddingRight = '0';
             }
-        })
-
-        instanceBTN.addEventListener('click', async e => {
-            let configClient = await this.db.readData('configClient')
-            let instanceSelect = configClient.instance_selct
-            let auth = await this.db.readData('accounts', configClient.account_selected)
-
-            if (e.target.classList.contains('instance-select')) {
-                instancesListPopup.innerHTML = ''
-                for (let instance of instancesList) {
-                    if (instance.whitelistActive) {
-                        instance.whitelist.map(whitelist => {
-                            if (whitelist == auth?.name) {
-                                if (instance.name == instanceSelect) {
-                                    instancesListPopup.innerHTML += `<div id="${instance.name}" class="instance-elements active-instance">${instance.name}</div>`
-                                } else {
-                                    instancesListPopup.innerHTML += `<div id="${instance.name}" class="instance-elements">${instance.name}</div>`
-                                }
+    
+            // Función auxiliar para verificar whitelist
+            const checkWhitelist = (instance, username) => {
+                return !instance.whitelistActive || 
+                       (instance.whitelist && instance.whitelist.includes(username));
+            };
+    
+            // Función para mostrar mensaje de whitelist
+            const showWhitelistMessage = (instance) => {
+                const popupError = new popup();
+                popupError.openPopup({
+                    title: 'Acceso Restringido',
+                    content: `No tienes acceso a la instancia "${instance.name}". Esta instancia requiere estar en la lista blanca para poder jugar.`,
+                    color: 'red',
+                    options: {
+                        confirmText: 'Entendido',
+                        cancelText: null
+                    }
+                });
+            };
+    
+            // Función para actualizar la instancia seleccionada
+            const updateSelectedInstance = async (newInstanceName) => {
+                const configClient = await this.db.readData('configClient');
+                configClient.instance_selct = newInstanceName;
+                await this.db.updateData('configClient', configClient);
+                
+                const instance = instancesList.find(i => i.name === newInstanceName);
+                await setStatus(instance.status);
+                
+                // Actualizar UI
+                await this.assetsHandler?.updateInstanceBackground(instance);
+                return instance;
+            };
+    
+            // Seleccionar instancia por defecto si no hay ninguna seleccionada
+            if (!instanceSelect) {
+                const defaultInstance = instancesList.find(i => !i.whitelistActive) || instancesList[0];
+                instanceSelect = defaultInstance.name;
+                await updateSelectedInstance(instanceSelect);
+            }
+    
+            // Event listener para el popup de selección de instancia
+            elements.instancePopup.addEventListener('click', async (e) => {
+                if (e.target.classList.contains('instance-elements')) {
+                    const newInstanceSelect = e.target.id;
+                    const instance = instancesList.find(i => i.name === newInstanceSelect);
+                    
+                    if (!checkWhitelist(instance, auth?.name)) {
+                        showWhitelistMessage(instance);
+                        return;
+                    }
+    
+                    // Actualizar UI
+                    document.querySelector('.active-instance')?.classList.remove('active-instance');
+                    e.target.classList.add('active-instance');
+                    
+                    await updateSelectedInstance(newInstanceSelect);
+                    elements.instancePopup.style.display = 'none';
+                }
+            });
+    
+            // Event listener para el botón de jugar
+            elements.instanceBTN.addEventListener('click', async (e) => {
+                const configClient = await this.db.readData('configClient');
+                const currentInstance = instancesList.find(i => i.name === configClient.instance_selct);
+    
+                if (e.target.classList.contains('instance-select')) {
+                    // Mostrar solo instancias accesibles
+                    elements.instancesListPopup.innerHTML = instancesList
+                        .filter(instance => checkWhitelist(instance, auth?.name))
+                        .map(instance => `
+                            <div id="${instance.name}" 
+                                 class="instance-elements ${instance.name === configClient.instance_selct ? 'active-instance' : ''}">
+                                ${instance.name}
+                                ${instance.whitelistActive ? ' 🔒' : ''}
+                            </div>
+                        `).join('');
+    
+                    elements.instancePopup.style.display = 'flex';
+                } else {
+                    // Verificar whitelist antes de iniciar
+                    if (!checkWhitelist(currentInstance, auth?.name)) {
+                        showWhitelistMessage(currentInstance);
+                        return;
+                    }
+    
+                    try {
+                        await this.startGame();
+                    } catch (error) {
+                        console.error('Error starting game:', error);
+                        const popupError = new popup();
+                        popupError.openPopup({
+                            title: 'Error',
+                            content: 'Ocurrió un error al intentar iniciar el juego. Por favor, intenta de nuevo.',
+                            color: 'red',
+                            options: {
+                                confirmText: 'OK',
+                                cancelText: null
                             }
-                        })
-                    } else {
-                        if (instance.name == instanceSelect) {
-                            instancesListPopup.innerHTML += `<div id="${instance.name}" class="instance-elements active-instance">${instance.name}</div>`
-                        } else {
-                            instancesListPopup.innerHTML += `<div id="${instance.name}" class="instance-elements">${instance.name}</div>`
-                        }
+                        });
                     }
                 }
-
-                instancePopup.style.display = 'flex'
-            }
-
-            if (!e.target.classList.contains('instance-select')) this.startGame()
-        })
-
-        instanceCloseBTN.addEventListener('click', () => instancePopup.style.display = 'none')
+            });
+    
+            // Event listener para cerrar popup
+            elements.instanceCloseBTN.addEventListener('click', () => {
+                elements.instancePopup.style.display = 'none';
+            });
+    
+            // Cerrar popup al presionar ESC
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && elements.instancePopup.style.display === 'flex') {
+                    elements.instancePopup.style.display = 'none';
+                }
+            });
+    
+        } catch (error) {
+            console.error('Error in instancesSelect:', error);
+            const popupError = new popup();
+            popupError.openPopup({
+                title: 'Error',
+                content: 'Ocurrió un error al cargar las instancias. Por favor, reinicia el launcher.',
+                color: 'red',
+                options: {
+                    confirmText: 'OK',
+                    cancelText: null
+                }
+            });
+        }
     }
 
     async startGame() {
