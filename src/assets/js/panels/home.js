@@ -1,5 +1,5 @@
 /**
- * @author Luuxis
+ * @author Pablo
  * @license CC-BY-NC 4.0 - https://creativecommons.org/licenses/by-nc/4.0
  */
 import { config, database, logger, changePanel, appdata, setStatus, pkg, popup } from '../utils.js'
@@ -24,8 +24,10 @@ class Home {
         document.querySelector('.settings-btn').addEventListener('click', e => changePanel('settings'))
     }
 
+
     async loadInstanceAssets() {
         const configClient = await this.db.readData('configClient');
+        const auth = await this.db.readData('accounts', configClient.account_selected);
         const instancesList = await config.getInstanceList();
         
         const sidebarLogoContainer = document.createElement('div');
@@ -35,6 +37,15 @@ class Home {
             document.querySelector('.player-options')
         );
     
+        // Mostrar pantalla de bienvenida si no hay instancia seleccionada
+        if (!configClient?.instance_selct) {
+            // Limpiar cualquier fondo existente y mostrar el de bienvenida
+            document.body.style.backgroundImage = `url('${this.assetsHandler.defaultAssets.background}')`;
+            this.assetsHandler.showWelcomeScreen();
+        }
+    
+        let activeInstanceFound = false;
+    
         for (let instance of instancesList) {
             const logoElement = await this.assetsHandler.createLogoElement(
                 instance,
@@ -43,22 +54,29 @@ class Home {
                     configClient.instance_selct = selectedInstance.name;
                     await this.db.updateData('configClient', configClient);
     
-                    // Actualizar fondo directamente aquí también
                     await this.assetsHandler.updateInstanceBackground(selectedInstance);
                     
                     const statusName = selectedInstance.customization?.name_display || 
                         selectedInstance.status?.nameServer ||
                         selectedInstance.name;
                     await setStatus(selectedInstance.status, statusName);
-                }
+                },
+                auth?.name
             );
     
             if (instance.name === configClient?.instance_selct) {
                 logoElement.classList.add('active-instance');
                 await this.assetsHandler.updateInstanceBackground(instance);
+                activeInstanceFound = true;
             }
     
             sidebarLogoContainer.appendChild(logoElement);
+        }
+    
+        // Si no se encontró ninguna instancia activa, mostrar la pantalla de bienvenida
+        if (!activeInstanceFound) {
+            document.body.style.backgroundImage = `url('${this.assetsHandler.defaultAssets.background}')`;
+            this.assetsHandler.showWelcomeScreen();
         }
     }
     

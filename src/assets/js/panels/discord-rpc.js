@@ -1,3 +1,8 @@
+/**
+ * @author Pablo
+ * @license CC-BY-NC 4.0 - https://creativecommons.org/licenses/by-nc/4.0
+ */
+
 const { Client } = require('discord-rpc');
 const clientId = '1334505672875835475'; // Replace with your Discord application ID
 
