@@ -9,6 +9,7 @@ class InstanceAssetsHandler {
         this.defaultAssets = {
             logo: 'assets/images/default/default-logo.png',
             background: 'assets/images/default/default-background.png',
+            welcomeBackground: 'assets/images/default/welcome-background.jpg', // Imagen para la pantalla de bienvenida
             icon: 'assets/images/icon.png'
         };
         this.addGlobalStyles();
@@ -65,7 +66,7 @@ class InstanceAssetsHandler {
 
             .instance-logo-container.active-instance {
                 opacity: 1;
-                background-color: rgba(76, 175, 80, 0.2);
+                background-color: rgba(38, 102, 40, 0.53);
                 pointer-events: none;
             }
 
@@ -92,117 +93,40 @@ class InstanceAssetsHandler {
                 right: 0px;
                 font-size: 14px;
             }
-
-            .welcome-screen {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.9));
-                z-index: 1000;
-                color: white;
-                text-align: center;
-                animation: fadeIn 0.5s ease;
-                backdrop-filter: blur(5px);
-            }
-
-            .welcome-content {
-                background: rgba(255, 255, 255, 0.1);
-                padding: 2em;
-                border-radius: 15px;
-                max-width: 80%;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            }
-
-            .welcome-screen h1 {
-                font-size: 2.5em;
-                margin-bottom: 0.5em;
-                color: #4CAF50;
-            }
-
-            .welcome-screen p {
-                font-size: 1.2em;
-                margin-bottom: 2em;
-                max-width: 600px;
-                line-height: 1.6;
-            }
-
-            .welcome-screen button {
-                padding: 12px 24px;
-                font-size: 1.1em;
-                cursor: pointer;
-                background-color: #4CAF50;
-                border: none;
-                border-radius: 5px;
-                color: white;
-                transition: all 0.3s ease;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-            }
-
-            .welcome-screen button:hover {
-                background-color: #45a049;
-                transform: translateY(-2px);
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            }
-
-            .welcome-screen button:active {
-                transform: translateY(0);
-            }
-
-            @keyframes fadeIn {
-                from { opacity: 0; }
-                to { opacity: 1; }
-            }
-
-            @keyframes slideIn {
-                from { transform: translateY(-10px); opacity: 0; }
-                to { transform: translateY(0); opacity: 1; }
-            }
-
-            .fade-in {
-                animation: fadeIn 0.5s ease forwards;
-            }
-
-            .slide-in {
-                animation: slideIn 0.5s ease forwards;
-            }
         `;
         document.head.appendChild(style);
     }
 
-    showWelcomeScreen() {
-        const welcomeScreen = document.createElement('div');
-        welcomeScreen.classList.add('welcome-screen');
+    showWelcomePanel() {
+        // Solo establecer el fondo, sin crear panel
+        this.setWelcomeBackground();
+    }
+    
+    hideWelcomePanel() {
+        // Elimina la clase del body que podría ocultar elementos
+        document.body.classList.remove('welcome-active');
+    }
+    
+    setWelcomeBackground() {
+        // Usar una imagen específica para cuando no hay instancias seleccionadas
+        const backgroundUrl = this.defaultAssets.welcomeBackground;
         
-        const welcomeContent = document.createElement('div');
-        welcomeContent.classList.add('welcome-content');
-        welcomeContent.innerHTML = `
-            <h1>¡Bienvenido al Launcher!</h1>
-            <p>Para comenzar, selecciona una instancia de Minecraft desde la barra lateral izquierda.<br>
-            Las instancias disponibles se mostrarán con un ícono activo, mientras que las instancias bloqueadas
-            tendrán un indicador de candado.</p>
-            <button id="welcome-continue">Entendido</button>
-        `;
+        const img = new Image();
+        img.onload = () => {
+            document.body.style.setProperty('background-image', `url('${backgroundUrl}')`, 'important');
+            document.body.style.setProperty('background-size', 'cover', 'important');
+            document.body.style.setProperty('background-position', 'center', 'important');
+            document.body.style.setProperty('background-repeat', 'no-repeat', 'important');
+            document.body.style.setProperty('background-color', 'rgba(0, 0, 0, 0.4)', 'important');
+            document.body.style.setProperty('background-blend-mode', 'overlay', 'important');
+        };
         
-        welcomeScreen.appendChild(welcomeContent);
-        document.body.appendChild(welcomeScreen);
-
-        // Establecer el fondo por defecto inmediatamente
-        document.body.style.setProperty('background-image', `url('${this.defaultAssets.background}')`, 'important');
-        document.body.style.setProperty('background-size', 'cover', 'important');
-        document.body.style.setProperty('background-position', 'center', 'important');
-        document.body.style.setProperty('background-repeat', 'no-repeat', 'important');
-
-        document.getElementById('welcome-continue').addEventListener('click', () => {
-            welcomeScreen.style.opacity = '0';
-            setTimeout(() => welcomeScreen.remove(), 500);
-        });
+        img.onerror = () => {
+            // Fallback a la imagen de fondo por defecto si hay error
+            document.body.style.setProperty('background-image', `url('${this.defaultAssets.background}')`, 'important');
+        };
+        
+        img.src = backgroundUrl;
     }
 
     async createLogoElement(instance, onClick, username) {
@@ -252,6 +176,10 @@ class InstanceAssetsHandler {
                 container.classList.add('active-instance');
                 
                 try {
+                    // Ya no necesitamos ocultar un panel, pero mantenemos la llamada
+                    // para mantener consistencia con el código existente
+                    this.hideWelcomePanel();
+                    
                     await this.updateInstanceBackground(instance);
                     onClick(instance);
                 } catch (error) {
@@ -280,6 +208,8 @@ class InstanceAssetsHandler {
                     document.body.style.setProperty('background-size', 'cover', 'important');
                     document.body.style.setProperty('background-position', 'center', 'important');
                     document.body.style.setProperty('background-repeat', 'no-repeat', 'important');
+                    document.body.style.setProperty('background-blend-mode', 'normal', 'important');
+                    document.body.style.setProperty('background-color', 'transparent', 'important');
                     document.body.style.setProperty('transition', 'opacity 0.5s ease', 'important');
                     document.body.style.opacity = '1';
                 }, 300);

@@ -283,7 +283,7 @@
     align-items: center;
     width: 90px;
     height: 100vh;
-    background: var(--background-transparent);
+
 }
 
 .player-options {
@@ -332,7 +332,7 @@
     border: solid 3px var(--element-color);
     border-radius: 15px;
     height: 3.2rem;
-    padding-right: 1.9rem;
+    padding-right: 0.5rem;
 }
 
 .play-btn {
@@ -410,44 +410,4 @@
     text-align: center;
 }
 
-.instances-tab {
-    position: relative;
-    background: var(--background);
-    border-radius: 10px;
-    padding: 1rem 3rem;
-}
 
-.close-popup {
-    position: absolute;
-    display: flex;
-    top: 10px;
-    right: 10px;
-    background: var(--shadow);
-    height: 30px;
-    width: 30px;
-    border-radius: 10px;
-    align-items: center;
-    justify-content: center;
-}
-
-.instances-tab p {
-    margin-top: 1.5rem;
-    font-size: 2rem;
-}
-
-.instance-elements {
-    background: var(--background-element);
-    text-align: center;
-    border-radius: 10px;
-    margin: 0.5rem 0;
-    font-size: 1.5rem;
-    cursor: pointer;
-}
-
-.instance-elements:hover {
-    background: var(--element-color);
-}
-
-.active-instance {
-    background: var(--element-color);
-}

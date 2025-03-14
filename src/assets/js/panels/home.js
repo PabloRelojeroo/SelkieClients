@@ -16,7 +16,6 @@ class Home {
         this.db = new database();
         this.rpc = new DiscordRPC();
         await this.rpc.init();
-        this.news()
         this.assetsHandler = new InstanceAssetsHandler();
         await this.loadInstanceAssets(); // Cargar assets iniciales
         this.socialLick()
@@ -24,38 +23,36 @@ class Home {
         document.querySelector('.settings-btn').addEventListener('click', e => changePanel('settings'))
     }
 
-
     async loadInstanceAssets() {
         const configClient = await this.db.readData('configClient');
         const auth = await this.db.readData('accounts', configClient.account_selected);
         const instancesList = await config.getInstanceList();
         
+        // Crear contenedor para los logos de instancias en la sidebar
         const sidebarLogoContainer = document.createElement('div');
         sidebarLogoContainer.classList.add('sidebar-logos');
         document.querySelector('.sidebar').insertBefore(
             sidebarLogoContainer, 
             document.querySelector('.player-options')
         );
-    
-        // Mostrar pantalla de bienvenida si no hay instancia seleccionada
-        if (!configClient?.instance_selct) {
-            // Limpiar cualquier fondo existente y mostrar el de bienvenida
-            document.body.style.backgroundImage = `url('${this.assetsHandler.defaultAssets.background}')`;
-            this.assetsHandler.showWelcomeScreen();
-        }
-    
-        let activeInstanceFound = false;
-    
+        
+        // Mostrar solo el fondo de bienvenida, sin ningún panel
+        this.assetsHandler.setWelcomeBackground();
+        
+        // Cargar todas las instancias sin seleccionar ninguna por defecto
         for (let instance of instancesList) {
             const logoElement = await this.assetsHandler.createLogoElement(
                 instance,
                 async (selectedInstance) => {
+                    // Callback cuando se selecciona una instancia
                     const configClient = await this.db.readData('configClient');
                     configClient.instance_selct = selectedInstance.name;
                     await this.db.updateData('configClient', configClient);
     
+                    // Actualizar fondo de la instancia seleccionada
                     await this.assetsHandler.updateInstanceBackground(selectedInstance);
                     
+                    // Actualizar estado del servidor
                     const statusName = selectedInstance.customization?.name_display || 
                         selectedInstance.status?.nameServer ||
                         selectedInstance.name;
@@ -64,43 +61,8 @@ class Home {
                 auth?.name
             );
     
-            if (instance.name === configClient?.instance_selct) {
-                logoElement.classList.add('active-instance');
-                await this.assetsHandler.updateInstanceBackground(instance);
-                activeInstanceFound = true;
-            }
-    
             sidebarLogoContainer.appendChild(logoElement);
         }
-    
-        // Si no se encontró ninguna instancia activa, mostrar la pantalla de bienvenida
-        if (!activeInstanceFound) {
-            document.body.style.backgroundImage = `url('${this.assetsHandler.defaultAssets.background}')`;
-            this.assetsHandler.showWelcomeScreen();
-        }
-    }
-    
-    async setInstanceBackground(instance) {
-        // Construir URL del fondo
-        const backgroundUrl = instance.background ? 
-            `${instance.url}/assets/instances/${instance.name}/background.png` : 
-            'assets/images/background.png';
-    
-        // Precargar imagen para transición suave
-        const img = new Image();
-        
-        img.onload = () => {
-            document.body.style.backgroundImage = `url('${backgroundUrl}')`;
-            document.body.style.backgroundSize = 'cover';
-            document.body.style.backgroundPosition = 'center';
-            document.body.style.backgroundRepeat = 'no-repeat';
-        };
-    
-        img.onerror = () => {
-            document.body.style.backgroundImage = 'url("assets/images/background.png")';
-        };
-    
-        img.src = backgroundUrl;
     }
 
     async news() {
@@ -166,7 +128,7 @@ class Home {
                             <div class="month">Janvier</div>
                         </div>
                     </div>
-                    <div class="news-content">
+                    <div class="news-content">a
                         <div class="bbWrapper">
                             <p>Imposible contactar con el servidor de noticias.</br>Porfavor verifique la configuracion.</p>
                         </div>
@@ -190,22 +152,11 @@ class Home {
             const configClient = await this.db.readData('configClient');
             const auth = await this.db.readData('accounts', configClient.account_selected);
             const instancesList = await config.getInstanceList();
-            let instanceSelect = instancesList.find(i => i.name == configClient?.instance_selct)?.name || null;
     
             // Cache DOM elements
             const elements = {
-                instanceBTN: document.querySelector('.play-instance'),
-                instancePopup: document.querySelector('.instance-popup'),
-                instancesListPopup: document.querySelector('.instances-List'),
-                instanceCloseBTN: document.querySelector('.close-popup'),
-                instanceSelectBtn: document.querySelector('.instance-select')
+                instanceBTN: document.querySelector('.play-instance')
             };
-    
-            // Manejar interfaz para instancia única
-            if (instancesList.length === 1) {
-                elements.instanceSelectBtn.style.display = 'none';
-                elements.instanceBTN.style.paddingRight = '0';
-            }
     
             // Función auxiliar para verificar whitelist
             const checkWhitelist = (instance, username) => {
@@ -227,99 +178,46 @@ class Home {
                 });
             };
     
-            // Función para actualizar la instancia seleccionada
-            const updateSelectedInstance = async (newInstanceName) => {
-                const configClient = await this.db.readData('configClient');
-                configClient.instance_selct = newInstanceName;
-                await this.db.updateData('configClient', configClient);
-                
-                const instance = instancesList.find(i => i.name === newInstanceName);
-                await setStatus(instance.status);
-                
-                // Actualizar UI
-                await this.assetsHandler?.updateInstanceBackground(instance);
-                return instance;
-            };
-    
-            // Seleccionar instancia por defecto si no hay ninguna seleccionada
-            if (!instanceSelect) {
-                const defaultInstance = instancesList.find(i => !i.whitelistActive) || instancesList[0];
-                instanceSelect = defaultInstance.name;
-                await updateSelectedInstance(instanceSelect);
-            }
-    
-            // Event listener para el popup de selección de instancia
-            elements.instancePopup.addEventListener('click', async (e) => {
-                if (e.target.classList.contains('instance-elements')) {
-                    const newInstanceSelect = e.target.id;
-                    const instance = instancesList.find(i => i.name === newInstanceSelect);
-                    
-                    if (!checkWhitelist(instance, auth?.name)) {
-                        showWhitelistMessage(instance);
-                        return;
-                    }
-    
-                    // Actualizar UI
-                    document.querySelector('.active-instance')?.classList.remove('active-instance');
-                    e.target.classList.add('active-instance');
-                    
-                    await updateSelectedInstance(newInstanceSelect);
-                    elements.instancePopup.style.display = 'none';
-                }
-            });
-    
             // Event listener para el botón de jugar
-            elements.instanceBTN.addEventListener('click', async (e) => {
+            elements.instanceBTN.addEventListener('click', async () => {
                 const configClient = await this.db.readData('configClient');
                 const currentInstance = instancesList.find(i => i.name === configClient.instance_selct);
-    
-                if (e.target.classList.contains('instance-select')) {
-                    // Mostrar solo instancias accesibles
-                    elements.instancesListPopup.innerHTML = instancesList
-                        .filter(instance => checkWhitelist(instance, auth?.name))
-                        .map(instance => `
-                            <div id="${instance.name}" 
-                                 class="instance-elements ${instance.name === configClient.instance_selct ? 'active-instance' : ''}">
-                                ${instance.name}
-                                ${instance.whitelistActive ? ' 🔒' : ''}
-                            </div>
-                        `).join('');
-    
-                    elements.instancePopup.style.display = 'flex';
-                } else {
-                    // Verificar whitelist antes de iniciar
-                    if (!checkWhitelist(currentInstance, auth?.name)) {
-                        showWhitelistMessage(currentInstance);
-                        return;
-                    }
-    
-                    try {
-                        await this.startGame();
-                    } catch (error) {
-                        console.error('Error starting game:', error);
-                        const popupError = new popup();
-                        popupError.openPopup({
-                            title: 'Error',
-                            content: 'Ocurrió un error al intentar iniciar el juego. Por favor, intenta de nuevo.',
-                            color: 'red',
-                            options: {
-                                confirmText: 'OK',
-                                cancelText: null
-                            }
-                        });
-                    }
+                
+                // Si no hay instancia seleccionada, mostrar error
+                if (!currentInstance) {
+                    const popupError = new popup();
+                    popupError.openPopup({
+                        title: 'Selecciona una instancia',
+                        content: 'Debes seleccionar una instancia de Minecraft antes de jugar.',
+                        color: 'orange',
+                        options: {
+                            confirmText: 'Entendido',
+                            cancelText: null
+                        }
+                    });
+                    return;
                 }
-            });
     
-            // Event listener para cerrar popup
-            elements.instanceCloseBTN.addEventListener('click', () => {
-                elements.instancePopup.style.display = 'none';
-            });
+                // Verificar whitelist antes de iniciar
+                if (!checkWhitelist(currentInstance, auth?.name)) {
+                    showWhitelistMessage(currentInstance);
+                    return;
+                }
     
-            // Cerrar popup al presionar ESC
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && elements.instancePopup.style.display === 'flex') {
-                    elements.instancePopup.style.display = 'none';
+                try {
+                    await this.startGame();
+                } catch (error) {
+                    console.error('Error starting game:', error);
+                    const popupError = new popup();
+                    popupError.openPopup({
+                        title: 'Error',
+                        content: 'Ocurrió un error al intentar iniciar el juego. Por favor, intenta de nuevo.',
+                        color: 'red',
+                        options: {
+                            confirmText: 'OK',
+                            cancelText: null
+                        }
+                    });
                 }
             });
     
@@ -487,7 +385,7 @@ class Home {
         let year = date.getFullYear()
         let month = date.getMonth() + 1
         let day = date.getDate()
-        let allMonth = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'sepriembre', 'actubre', 'noviebre', 'diciembre']
+        let allMonth = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'sepriembre', 'octubre', 'noviebre', 'diciembre']
         return { year: year, month: allMonth[month - 1], day: day }
     }
 }
