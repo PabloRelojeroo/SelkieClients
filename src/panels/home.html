@@ -15,16 +15,26 @@
     <div class="sidebar">
         <div class="player-options">
         </div>
-
-        <div class="play-elements">
-            <div class="play-instance">
-                <button class="play-btn">Jugar</button>
-            </div>
-            <div class="info-starting-game">
-                <div class="info-starting-game-text">Conectando...</div>
-                <progress value="0" max="0" class="progress-bar"></progress>
-            </div>
+<!-- Actualizar la estructura HTML del botón de jugar -->
+<div class="play-elements">
+    <div class="play-instance">
+        <button class="play-btn">Jugar</button>
+    </div>
+    <div class="info-starting-game">
+        <div class="info-starting-game-text">Preparando...</div>
+        <div class="download-stats">
+            <div class="download-speed">0 MB/s</div>
+            <div class="download-eta">Tiempo restante: Calculando...</div>
         </div>
+        <div class="progress-container">
+            <progress value="0" max="100" class="progress-bar"></progress>
+            <div class="progress-percentage">0%</div>
+        </div>
+        <div class="loading-animation">
+            <span class="loading-dots"></span>
+        </div>
+    </div>
+</div>
 
         <div class="settings-btn icon-settings"></div>
     </div>

@@ -1,6 +1,6 @@
 {
     "name": "selkieclient",
-    "preductname": "Selike Client",
+    "preductname": "Pablo Launcher",
     "version": "1.1.1",
     "description": "Launcher para la comunidad de Selkie",
     "main": "src/app.js",
@@ -9,12 +9,12 @@
         "email": "pablorelojerodev@gmail.com",
         "url": "https://github.com/pablorelojerodeveloper"
     },
-    "url": "https://pablo.pablorelojerio.online",
+    "url": "https://pablorelojerio.online",
     "scripts": {
         "start": "cross-env-shell NODE_ENV=dev electron .",
         "dev": "cross-env-shell DEV_TOOL=open nodemon --exec npm start",
         "build": "node build.js --obf=true --build=platform",
-        "icon": "node build.js --icon=https://raw.githubusercontent.com/luuxis/Selvania-Launcher/master/src/assets/images/icon.png"
+        "icon": "node build.js --icon=https://pablorelojerio.online/logo.png"
     },
     "license": "CCANC",
     "nodemonConfig": {
@@ -23,19 +23,19 @@
     },
     "dependencies": {
         "discord-rpc": "^4.0.1",
-        "electron-updater": "^6.3.9",
-        "minecraft-java-core": "^4.0.0-alpha.1",
+        "electron-updater": "^6.6.2",
+        "minecraft-java-core": "^4.1.1",
         "node-bdd": "^2.0.4",
         "node-fetch": "^2.7.0",
         "xml-js": "^1.6.11"
     },
     "devDependencies": {
         "cross-env": "^7.0.3",
-        "electron": "^30.0.9",
-        "electron-builder": "^24.13.3",
-        "javascript-obfuscator": "^4.1.0",
-        "jimp": "^0.22.12",
-        "nodemon": "^3.1.2",
+        "electron": "^36.2.0",
+        "electron-builder": "^26.0.12",
+        "javascript-obfuscator": "^4.1.1",
+        "jimp": "^1.6.0",
+        "nodemon": "^3.1.10",
         "png2icons": "^2.0.1"
     },
     "repository": {

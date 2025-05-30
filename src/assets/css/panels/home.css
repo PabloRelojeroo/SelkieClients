@@ -6,6 +6,158 @@
     align-items: center;
 }
 
+/* Animaciones para el botón de jugar */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+  
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  .play-instance {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    border: solid 3px var(--element-color);
+    border-radius: 15px;
+    height: 3.2rem;
+    padding-right: 0.5rem;
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+  
+  .play-instance:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  }
+  
+  .play-instance:active {
+    transform: translateY(1px);
+  }
+  
+  .play-btn {
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(90deg, var(--element-color), var(--color), var(--element-color));
+    background-size: 200% 100%;
+    color: var(--background);
+    font-size: 2rem;
+    font-weight: bolder;
+    padding: 0 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 0;
+    height: 100%;
+    animation: gradient-shift 3s ease infinite;
+  }
+  
+  .play-btn:hover {
+    background-size: 150% 100%;
+  }
+  
+  /* Mejoras para la información de descarga */
+  .info-starting-game {
+    display: none;
+    text-align: center;
+    background: var(--background-transparent);
+    border-radius: 15px;
+    padding: 12px;
+    width: 280px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  .info-starting-game-text {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+    font-weight: bold;
+  }
+  
+  .download-stats {
+    display: flex;
+    justify-content: space-between;
+    margin: 8px 0;
+    font-size: 0.9rem;
+    color: var(--color);
+  }
+  
+  .download-speed {
+    color: #1AC707;
+  }
+  
+  .download-eta {
+    color: #ffaa00;
+  }
+  
+  .progress-container {
+    position: relative;
+    width: 100%;
+    height: 20px;
+    margin: 10px 0;
+  }
+  
+  .progress-bar {
+    appearance: none;
+    width: 100%;
+    height: 10px;
+    margin: 0;
+    border-radius: 10px;
+  }
+  
+  .progress-bar::-webkit-progress-bar {
+    background-color: var(--background);
+    border: solid 1px var(--element-color);
+    border-radius: 10px;
+  }
+  
+  .progress-bar::-webkit-progress-value {
+    background: linear-gradient(90deg, var(--element-color), #1AC707);
+    border-radius: 10px;
+    transition: width 0.2s ease;
+  }
+  
+  .progress-percentage {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.8rem;
+    font-weight: bold;
+  }
+  
+  /* Animación de carga */
+  .loading-animation {
+    display: none;
+    margin-top: 5px;
+  }
+  
+  .loading-dots {
+    display: inline-block;
+  }
+  
+  .loading-dots:after {
+    content: '.';
+    animation: dots 1.5s steps(5, end) infinite;
+  }
+  
+  @keyframes dots {
+    0%, 20% { content: '.'; }
+    40% { content: '..'; }
+    60% { content: '...'; }
+    80%, 100% { content: ''; }
+  }
+  
+  /* Animación para el estado del juego en curso */
+  .game-running {
+    color: #1AC707;
+    animation: pulse 2s infinite ease-in-out;
+  }
+
 /*******************************************************************************
  *                                                                             *
  * Status server                                                               *
