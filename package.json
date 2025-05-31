@@ -7,14 +7,14 @@
     "author": {
         "name": "PabloRelojero",
         "email": "pablorelojerodev@gmail.com",
-        "url": "https://github.com/pablorelojerodeveloper"
+        "url": "https://github.com/PabloRelojeroo"
     },
     "url": "https://pablorelojerio.online",
     "scripts": {
         "start": "cross-env-shell NODE_ENV=dev electron .",
         "dev": "cross-env-shell DEV_TOOL=open nodemon --exec npm start",
         "build": "node build.js --obf=true --build=platform",
-        "icon": "node build.js --icon=https://raw.githubusercontent.com/luuxis/Selvania-Launcher/master/src/assets/images/icon.png",
+        "icon": "node build.js --icon=https://raw.githubusercontent.com/PabloRelojeroo/SelkieClients/master/src/assets/images/icon.png",
         "build2": "cross-env-shell NODE_ENV=prod electron-builder --config=build.json"
     },
     "license": "CCANC",
@@ -35,12 +35,12 @@
         "electron": "^36.2.0",
         "electron-builder": "^26.0.12",
         "javascript-obfuscator": "^4.1.1",
-        "jimp": "^1.6.0",
-        "nodemon": "^3.1.10",
+        "jimp": "^0.22.12",
+        "nodemon": "^3.1.2",
         "png2icons": "^2.0.1"
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/PabloRelojeroDeveloper/SelkieClients.git"
+        "url": "git+https://github.com/PabloRelojeroo/SelkieClients.git"
     }
 }
