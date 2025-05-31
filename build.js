@@ -92,7 +92,7 @@ class Index {
                 mac: {
                     icon: "./app/assets/images/icon.icns",
                     category: "public.app-category.games",
-                    identity: "Developer ID Application: <PabloRelojero>",
+                    identity: "PabloRelojero",
                     target: [{
                         target: "dmg",
                         arch: "universal"
