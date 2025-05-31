@@ -1,7 +1,7 @@
 {
     "name": "selkieclient",
     "preductname": "Pablo Launcher",
-    "version": "1.1.1",
+    "version": "1.1.2",
     "description": "Launcher para la comunidad de Selkie",
     "main": "src/app.js",
     "author": {
@@ -14,7 +14,7 @@
         "start": "cross-env-shell NODE_ENV=dev electron .",
         "dev": "cross-env-shell DEV_TOOL=open nodemon --exec npm start",
         "build": "node build.js --obf=true --build=platform",
-        "icon": "node build.js --icon=https://pablorelojerio.online/logo.png"
+        "icon": "node build.js --icon=https://raw.githubusercontent.com/luuxis/Selvania-Launcher/master/src/assets/images/icon.png"
     },
     "license": "CCANC",
     "nodemonConfig": {
