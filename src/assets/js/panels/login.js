@@ -13,6 +13,9 @@ class Login {
         this.config = config;
         this.db = new database();
 
+        // Verificar si ya existe una cuenta guardada
+        await this.checkExistingAccount();
+
         if (typeof this.config.online == 'boolean') {
             this.config.online ? this.getMicrosoft() : this.getCrack()
         } else if (typeof this.config.online == 'string') {
@@ -25,6 +28,68 @@ class Login {
             document.querySelector('.cancel-home').style.display = 'none'
             changePanel('settings')
         })
+    }
+
+    async checkExistingAccount() {
+        try {
+            // Leer configuración del cliente
+            let configClient = await this.db.readData('configClient');
+            
+            if (configClient && configClient.account_selected) {
+                // Verificar si existe una cuenta seleccionada
+                let accounts = await this.db.readData('accounts') || [];
+                let selectedAccount = accounts.find(account => account.ID === configClient.account_selected);
+                
+                if (selectedAccount) {
+                    // Verificar si el token necesita ser refrescado
+                    if (await this.refreshTokenIfNeeded(selectedAccount)) {
+                        // Si la cuenta es válida, ir directamente al home
+                        await accountSelect(selectedAccount);
+                        changePanel('home');
+                        return true; // Indica que se encontró una cuenta válida
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error checking existing account:', error);
+        }
+        return false; // No se encontró cuenta válida
+    }
+
+    async refreshTokenIfNeeded(account) {
+        try {
+            // Solo refrescar tokens de Microsoft
+            if (account.microsoft && account.refresh_token) {
+                // Verificar si el token de acceso ha expirado o está próximo a expirar
+                const now = Date.now();
+                const tokenExpiry = account.expires_at || 0;
+                
+                // Si el token expira en menos de 5 minutos, refrescarlo
+                if (tokenExpiry - now < 5 * 60 * 1000) {
+                    console.log('Refrescando token de Microsoft...');
+                    
+                    let refreshedAccount = await ipcRenderer.invoke('Microsoft-refresh', account.refresh_token);
+                    
+                    if (refreshedAccount && !refreshedAccount.error) {
+                        // Actualizar la cuenta con los nuevos tokens
+                        Object.assign(account, refreshedAccount);
+                        await this.db.updateData('accounts', account);
+                        console.log('Token refrescado exitosamente');
+                        return true;
+                    } else {
+                        console.log('Error al refrescar token, se requiere nuevo login');
+                        return false;
+                    }
+                }
+            }
+            
+            // Para cuentas offline o tokens válidos
+            return true;
+            
+        } catch (error) {
+            console.error('Error refreshing token:', error);
+            return false;
+        }
     }
 
     async getMicrosoft() {
