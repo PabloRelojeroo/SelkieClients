@@ -68,8 +68,26 @@ ipcMain.handle('Microsoft-window', async (_, client_id) => {
 ipcMain.handle('Microsoft-refresh', async (_, client_id, refresh_token) => {
     try {
         const microsoft = new Microsoft(client_id);
-        return await microsoft.refresh(refresh_token);
+        const refreshedAuth = await microsoft.refresh(refresh_token);
+        
+        // Asegúrate de que el objeto devuelto tenga la estructura correcta
+        if (refreshedAuth && refreshedAuth.access_token) {
+            return {
+                access_token: refreshedAuth.access_token,
+                refresh_token: refreshedAuth.refresh_token || refresh_token, // Mantén el refresh_token si no se devuelve uno nuevo
+                expires_in: refreshedAuth.expires_in || 3600, // Default 1 hora
+                uuid: refreshedAuth.uuid,
+                name: refreshedAuth.name,
+                profile: refreshedAuth.profile
+            };
+        } else {
+            return {
+                error: true,
+                message: 'Token refresh falló - respuesta inválida'
+            };
+        }
     } catch (error) {
+        console.error('Error refreshing Microsoft token:', error);
         return {
             error: true,
             message: error.message || 'Error refrescando token Microsoft'
