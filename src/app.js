@@ -64,6 +64,19 @@ ipcMain.handle('Microsoft-window', async (_, client_id) => {
     return await new Microsoft(client_id).getAuth();
 })
 
+// Nuevo: Soporte para refresh de tokens Microsoft
+ipcMain.handle('Microsoft-refresh', async (_, client_id, refresh_token) => {
+    try {
+        const microsoft = new Microsoft(client_id);
+        return await microsoft.refresh(refresh_token);
+    } catch (error) {
+        return {
+            error: true,
+            message: error.message || 'Error refrescando token Microsoft'
+        };
+    }
+})
+
 ipcMain.handle('is-dark-theme', (_, theme) => {
     if (theme === 'dark') return true
     if (theme === 'light') return false

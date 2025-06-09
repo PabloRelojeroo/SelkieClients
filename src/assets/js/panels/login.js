@@ -2,17 +2,139 @@
  * @author Pablo
  * @license CC-BY-NC 4.0 - https://creativecommons.org/licenses/by-nc/4.0
  */
-const { AZauth, Mojang } = require('minecraft-java-core');
+const { AZauth, Mojang, Microsoft } = require('minecraft-java-core');
 const { ipcRenderer } = require('electron');
 
 import { popup, database, changePanel, accountSelect, addAccount, config, setStatus } from '../utils.js';
 
 class Login {
     static id = "login";
+    
     async init(config) {
         this.config = config;
         this.db = new database();
 
+        // Primero verificar si hay una cuenta existente y válida
+        await this.checkExistingAccount();
+    }
+
+    async checkExistingAccount() {
+        try {
+            let configClient = await this.db.readData('configClient');
+            
+            if (configClient && configClient.account_selected) {
+                let account = await this.db.readData('accounts', configClient.account_selected);
+                
+                if (account) {
+                    console.log('Cuenta existente encontrada, verificando token...');
+                    
+                    // Verificar y refrescar token según el tipo de cuenta
+                    let refreshedAccount = await this.refreshAccountToken(account);
+                    
+                    if (refreshedAccount) {
+                        console.log('Token refrescado exitosamente, auto-login...');
+                        await this.db.updateData('accounts', refreshedAccount, account.ID);
+                        await accountSelect(refreshedAccount);
+                        changePanel('home');
+                        return; // Auto-login exitoso
+                    } else {
+                        console.log('No se pudo refrescar el token, mostrando login...');
+                    }
+                }
+            }
+            
+            // Si no hay cuenta válida, mostrar login
+            this.showLoginInterface();
+            
+        } catch (error) {
+            console.error('Error verificando cuenta existente:', error);
+            this.showLoginInterface();
+        }
+    }
+
+    async refreshAccountToken(account) {
+        try {
+            // Verificar si el token ha expirado (si existe expires_at)
+            if (account.expires_at && Date.now() < account.expires_at) {
+                console.log('Token aún válido');
+                return account; // Token aún válido
+            }
+
+            if (account.refresh_token) {
+                // Cuenta Microsoft/Xbox - usar refresh token
+                if (account.meta && account.meta.type === 'msa') {
+                    return await this.refreshMicrosoftToken(account);
+                }
+                // Cuenta AZauth - usar refresh token si está disponible
+                else if (this.config.online && typeof this.config.online === 'string') {
+                    return await this.refreshAZauthToken(account);
+                }
+            }
+            
+            // Para cuentas offline (Mojang crack), no hay refresh necesario
+            if (account.meta && account.meta.type === 'offline') {
+                return account;
+            }
+
+            return null; // No se pudo refrescar
+            
+        } catch (error) {
+            console.error('Error refrescando token:', error);
+            return null;
+        }
+    }
+
+    async refreshMicrosoftToken(account) {
+        try {
+            if (!account.refresh_token) return null;
+            
+            const refreshedAuth = await ipcRenderer.invoke('Microsoft-refresh', this.config.client_id, account.refresh_token);
+            
+            if (refreshedAuth && !refreshedAuth.error) {
+                // Actualizar el account con los nuevos tokens
+                return {
+                    ...account,
+                    access_token: refreshedAuth.access_token,
+                    refresh_token: refreshedAuth.refresh_token,
+                    expires_at: Date.now() + (refreshedAuth.expires_in * 1000),
+                    uuid: refreshedAuth.uuid || account.uuid,
+                    name: refreshedAuth.name || account.name
+                };
+            }
+            
+            return null;
+        } catch (error) {
+            console.error('Error refrescando token Microsoft:', error);
+            return null;
+        }
+    }
+
+    async refreshAZauthToken(account) {
+        try {
+            if (!account.refresh_token) return null;
+            
+            const azauth = new AZauth(this.config.online);
+            const refreshedAuth = await azauth.refresh(account.refresh_token);
+            
+            if (refreshedAuth && !refreshedAuth.error) {
+                return {
+                    ...account,
+                    access_token: refreshedAuth.access_token,
+                    refresh_token: refreshedAuth.refresh_token,
+                    expires_at: Date.now() + (refreshedAuth.expires_in * 1000),
+                    uuid: refreshedAuth.uuid || account.uuid,
+                    name: refreshedAuth.name || account.name
+                };
+            }
+            
+            return null;
+        } catch (error) {
+            console.error('Error refrescando token AZauth:', error);
+            return null;
+        }
+    }
+
+    showLoginInterface() {
         if (typeof this.config.online == 'boolean') {
             this.config.online ? this.getMicrosoft() : this.getCrack()
         } else if (typeof this.config.online == 'string') {
@@ -46,6 +168,10 @@ class Login {
                     popupLogin.closePopup();
                     return;
                 } else {
+                    // Agregar información de expiración del token
+                    if (account_connect.expires_in) {
+                        account_connect.expires_at = Date.now() + (account_connect.expires_in * 1000);
+                    }
                     await this.saveData(account_connect)
                     popupLogin.closePopup();
                 }
@@ -98,6 +224,9 @@ class Login {
                 });
                 return;
             }
+            
+            // Las cuentas offline no expiran
+            MojangConnect.expires_at = Date.now() + (365 * 24 * 60 * 60 * 1000); // 1 año
             await this.saveData(MojangConnect)
             popupLogin.closePopup();
         });
@@ -181,10 +310,18 @@ class Login {
                         return;
                     }
 
+                    // Agregar información de expiración del token
+                    if (AZauthConnect.expires_in) {
+                        AZauthConnect.expires_at = Date.now() + (AZauthConnect.expires_in * 1000);
+                    }
                     await this.saveData(AZauthConnect)
                     PopupLogin.closePopup();
                 });
             } else if (!AZauthConnect.A2F) {
+                // Agregar información de expiración del token
+                if (AZauthConnect.expires_in) {
+                    AZauthConnect.expires_at = Date.now() + (AZauthConnect.expires_in * 1000);
+                }
                 await this.saveData(AZauthConnect)
                 PopupLogin.closePopup();
             }
